@@ -1,0 +1,37 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+
+PATH="$PATH:$PWD/bin/"
+
+# Hopefully this functionallity gets added to getent at some point
+getsubordinate(){
+  IFS=:
+  uname="$(whoami)"
+  while IFS= read -r line
+  do
+    parts=( $line )
+    if [ "${parts[0]}" = "$uid" ] || [ "${parts[0]}" = "$uname" ]
+    then
+      printf "%s" "$line"
+      return 0
+    fi
+  done < "$1"
+  return 1
+}
+
+uid=$(id -u)
+gid=$(id -g)
+
+OLDIFS="$IFS"
+IFS=:
+subuid=( $(getsubordinate /etc/subuid) )
+subgid=( $(getsubordinate /etc/subgid) )
+IFS="$OLDIFS"
+
+uid_lower=${subuid[1]}
+uid_count=${subuid[2]}
+gid_lower=${subgid[1]}
+gid_count=${subgid[2]}
+
+usernsexec 0 $uid 1 1 $uid_lower $uid_count -- 0 $gid 1 1 $gid_lower $gid_count -- "$@"
