@@ -4,6 +4,13 @@ cd "$(dirname "$0")"
 
 PATH="$PATH:$PWD/bin/"
 
+options=
+if [ "$1" == --allow-setgroups ]
+then
+  options="$options --allow-setgroups"
+  shift
+fi
+
 # Hopefully this functionallity gets added to getent at some point
 getsubordinate(){
   IFS=:
@@ -34,4 +41,4 @@ uid_count=${subuid[2]}
 gid_lower=${subgid[1]}
 gid_count=${subgid[2]}
 
-usernsexec 0 $uid 1 1 $uid_lower $uid_count -- 0 $gid 1 1 $gid_lower $gid_count -- "$@"
+usernsexec $options 0 $uid 1 1 $uid_lower $uid_count -- 0 $gid 1 1 $gid_lower $gid_count -- "$@"
