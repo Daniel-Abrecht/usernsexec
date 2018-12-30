@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -28,6 +29,17 @@ int forkexec(char* argv[]){
 }
 
 int main(int argc, char* argv[]){
+  bool allowsetgroups = false;
+
+  if(argc>2){
+    if(!strcmp(argv[1],"--allow-setgroups")){
+      allowsetgroups = true;
+      argv[1] = argv[0];
+      argv = argv + 1;
+      argc--;
+    }
+  }
+
   struct subargs subargs[3];
   memset(subargs,0,sizeof(subargs));
   subargs[0].args = argv + 1;
@@ -48,7 +60,7 @@ int main(int argc, char* argv[]){
   }
 
   if(j != 3 || subargs[0].count % 3 || subargs[1].count % 3 || !subargs[2].count){
-    printf("Usage: %s [uid lower count...] -- [gid lower count...] -- cmd [args...]\n", argv[0]);
+    printf("Usage: %s [--allow-setgroups] [uid lower count...] -- [gid lower count...] -- cmd [args...]\n", argv[0]);
     return 1;
   }
 
@@ -112,7 +124,7 @@ int main(int argc, char* argv[]){
     close(pfds[0]);
 
     unshare(CLONE_NEWUSER);
-    {
+    if(!allowsetgroups){
       int fd = open("/proc/self/setgroups",O_WRONLY);
       if(!fd){
         perror("Failed to open /proc/self/setgroups");
