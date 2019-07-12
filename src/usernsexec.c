@@ -126,7 +126,7 @@ int main(int argc, char* argv[]){
     unshare(CLONE_NEWUSER);
     if(!allowsetgroups){
       int fd = open("/proc/self/setgroups",O_WRONLY);
-      if(!fd){
+      if(fd == -1){
         perror("Failed to open /proc/self/setgroups");
         write(pfds[1],(int[]){1},sizeof(int));
         close(pfds[1]);
