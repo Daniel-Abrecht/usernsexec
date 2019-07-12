@@ -123,7 +123,15 @@ int main(int argc, char* argv[]){
 
     close(pfds[0]);
 
-    unshare(CLONE_NEWUSER);
+    if(unshare(CLONE_NEWUSER) == -1){
+      perror("unshare(CLONE_NEWUSER) failed");
+      if(errno == EPERM)
+        fprintf(stderr, "Are unprivileged containers allowed?\nCheck using 'sysctl kernel.unprivileged_userns_clone' and consider enabling it if it isn't already\n");
+      write(pfds[1],(int[]){1},sizeof(int));
+      close(pfds[1]);
+      exit(1);
+    }
+
     if(!allowsetgroups){
       int fd = open("/proc/self/setgroups",O_WRONLY);
       if(fd == -1){
